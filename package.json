@@ -9,11 +9,8 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@blockfrost/blockfrost-js": "^6.1.0",
-    "@builder.io/qwik": "^1.19.0",
-    "@builder.io/qwik-city": "^1.19.0",
-    "@qwikdev/astro": "^0.8.3",
     "astro": "^6.1.1",
+    "lit": "^3.3.2",
     "lucid-cardano": "^0.10.11"
   },
   "devDependencies": {
