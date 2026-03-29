@@ -1,5 +1,5 @@
 ---  
-import WalletConnect from '../components/WalletConnect.qwik';  
+import { WalletButton } from '../components/wallet/WalletButton.qwik';
 ---  
 
 <html lang="en">  
@@ -11,9 +11,9 @@ import WalletConnect from '../components/WalletConnect.qwik';
 <body>  
   <header>  
     <h1>P2P Marketplace <span style="font-size:0.6em;">(Items only — $P2P)</span></h1>  
-  </header>  
+  </header>
 
-  <WalletConnect client:load />  
+  <WalletButton client:load />
 
   <main>  
     <p>Connect wallet to start buying/selling private images & digital items.</p>  

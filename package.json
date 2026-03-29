@@ -13,10 +13,10 @@
     "@builder.io/qwik": "^1.19.0",
     "@builder.io/qwik-city": "^1.19.0",
     "@qwikdev/astro": "^0.8.3",
-    "astro": "^5.17.1",
+    "astro": "^6.1.1",
     "lucid-cardano": "^0.10.11"
   },
   "devDependencies": {
-    "@astrojs/vercel": "^8.0.0"
+    "@astrojs/vercel": "^10.0.3"
   }
 }
