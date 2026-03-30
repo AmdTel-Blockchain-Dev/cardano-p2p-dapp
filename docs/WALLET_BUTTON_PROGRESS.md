@@ -1,39 +1,35 @@
-# Wallet Button Progress – Self-Contained Login Component
+# Wallet Button Progress - Self-Contained Lit Component
 
-## Goal
-A single, reusable `<wallet-button>` component that can be dropped on any page.
-- Connect via any Cardano wallet (CIP-30)
-- After login → shows Profile button with truncated address
-- Profile popover: View Profile | Switch Wallet | Log Out
-- Foundation for on-chain user identity (future P2P marketplace + governance token)
+## Current Status (as of 31 March 2026)
+**Stage Complete: Pre-Step 2 - Explicit Wallet + Address Selection UX**
 
-## Current State (29 March 2026)
-- ✅ Lit-based web component (`src/components/wallet/WalletButton.js`)
-- ✅ Basic UI states: Connect → Connected/Profile → Popover
-- ✅ Wallet detection (Nami, Eternl, Flint, etc.)
-- ✅ Placeholder connection flow
-- ✅ Works with `client:load` style via manual script import
-- ✅ No Qwik or heavy framework bloat
-- ✅ Astro 6 + Vercel adapter stable
+### What was implemented:
+- **Connect button** always opens a clean wallet selector modal listing detected CIP-30 wallets (Nami, Eternl, Flint, Lace, etc.). No automatic connection to previously used wallets.
+- After selecting a wallet → `enable()` is called, then an **Address Selector modal** appears so the user must explicitly choose which address to log in with (even if only one address exists).
+- Once logged in:
+  - Button shows truncated address.
+  - Clicking the button opens a popover with:
+    - "View Profile" (placeholder)
+    - **"Switch Address"** – allows changing to a different address in the *same* wallet without full re-login.
+    - **"Log Off"** – clears localStorage and resets to Connect state. This is the only way to switch to a completely different wallet.
+- Persistence via `localStorage` (`cardano-wallet-name` + `cardano-active-address`).
+- `currentWalletApi` stored for fast same-wallet address switching.
+- High-contrast, theme-friendly styling using CSS `light-dark()` with fallbacks. Automatically respects system `prefers-color-scheme` (light/dark) and works cleanly in both themes.
+- Blue "Connect Wallet" button kept as-is (clean accent color).
+- All code remains in a single self-contained `src/components/wallet/WalletButton.js` LitElement — minimal footprint, no extra dependencies.
 
-## Next Steps (Tomorrow)
-1. **Step 2**: Real Lucid + CIP-30 integration
-   - Proper `enable()` + `lucid.selectWallet()`
-   - Fetch real Bech32 address + networkId
-   - localStorage persistence (survives refresh)
-   - Wallet selector dropdown instead of auto-first
+### How to test:
+1. Click "Connect Wallet" → choose wallet → choose address.
+2. Open popover → test "Switch Address" and "Log Off".
+3. Toggle themes in DevTools (Cmd/Ctrl+Shift+P → "Emulate CSS prefers-color-scheme: dark/light") to verify readability.
 
-2. **Step 3**: Polish & Persistence
-   - Add ADA balance display
-   - Better error handling / toast messages
-   - Optional avatar from address (Blockies or similar — lightweight)
+### Next Stage (Step 2)
+- Integrate real Lucid.js for proper Cardano signing and state management.
+- Improve session restoration with actual re-enable on page load.
+- Add error boundaries and better user feedback.
+- Prepare foundation for self-governed token and P2P marketplace features.
 
-3. Future
-   - Integrate our self-governed token balance
-   - Profile page link (on-chain data)
-   - P2P marketplace hooks (buy/sell services/items)
+This matches the exact UX flow requested: different wallet = Log Off + re-login; same wallet = Switch Address only.
 
-## Usage Example (in any .astro file)
-```astro
-<wallet-button></wallet-button>
-<script type="module" src="/src/components/wallet/WalletButton.js"></script>
+Branch: `feature/self-contained-wallet-button`
+Last updated: 31 March 2026
