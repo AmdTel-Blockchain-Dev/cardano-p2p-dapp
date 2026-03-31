@@ -13,6 +13,136 @@ class WalletButton extends LitElement {
     availableWallets: { type: Array, state: true }
   };
 
+  static get styles() {
+    return css`
+      :host {
+        --primary-blue: #0066ff;
+        --bg: light-dark(#ffffff, #1a1a1a);
+        --surface: light-dark(#f8f9fa, #2a2a2a);
+        --text: light-dark(#111111, #eeeeee);
+        --text-secondary: light-dark(#555555, #aaaaaa);
+        --border: light-dark(#dddddd, #444444);
+        --danger: #ff5555;
+        --radius: 12px;
+        --button-radius: 9999px;
+      }
+
+      .connect-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--button-radius);
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--primary-blue);
+        color: white;
+        border: none;
+      }
+
+      .connect-btn:hover {
+        background: #0052cc;
+      }
+
+      .connected-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--button-radius);
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      .popover {
+        position: absolute;
+        top: 60px;
+        right: 20px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem;
+        width: 240px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        color: var(--text);
+        z-index: 100;
+      }
+
+      .modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        width: 320px;
+        z-index: 1000;
+        color: var(--text);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      }
+
+      .modal-header {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .modal-body button {
+        display: block;
+        width: 100%;
+        padding: 0.75rem;
+        margin: 0.4rem 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 0.95rem;
+      }
+
+      .modal-body button:hover {
+        background: light-dark(#f0f0f0, #3a3a3a);
+        border-color: var(--primary-blue);
+      }
+
+      .modal-close {
+        margin-top: 1rem;
+        background: transparent;
+        color: var(--text-secondary);
+        border: none;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+
+      .modal-close:hover {
+        color: var(--text);
+      }
+
+      /* Popover buttons */
+      .popover-btn {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 0.6rem 1rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .popover-btn:hover {
+        background: light-dark(#f0f0f0, #3a3a3a);
+        border-color: var(--primary-blue);
+      }
+
+      .popover-btn.danger {
+        color: var(--danger);
+      }
+    `;
+  }
+
   constructor() {
     super();
     this.isConnected = false;
@@ -179,111 +309,6 @@ class WalletButton extends LitElement {
 
   render() {
     return html`
-      <style>
-        :host {
-          --primary-blue: #0066ff;
-          --bg: light-dark(#ffffff, #1a1a1a);
-          --surface: light-dark(#f8f9fa, #2a2a2a);
-          --text: light-dark(#111111, #eeeeee);
-          --text-secondary: light-dark(#555555, #aaaaaa);
-          --border: light-dark(#dddddd, #444444);
-          --danger: #ff5555;
-          --radius: 12px;
-          --button-radius: 9999px;
-        }
-
-        .connect-btn {
-          padding: 0.75rem 1.5rem;
-          border-radius: var(--button-radius);
-          font-weight: 600;
-          cursor: pointer;
-          background: var(--primary-blue);
-          color: white;
-          border: none;
-        }
-
-        .connect-btn:hover {
-          background: #0052cc;
-        }
-
-        .connected-btn {
-          padding: 0.75rem 1.5rem;
-          border-radius: var(--button-radius);
-          font-weight: 600;
-          cursor: pointer;
-          background: var(--surface);
-          color: var(--text);
-          border: 1px solid var(--border);
-        }
-
-        .popover {
-          position: absolute;
-          top: 60px;
-          right: 20px;
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: var(--radius);
-          padding: 1rem;
-          width: 240px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-          color: var(--text);
-          z-index: 100;
-        }
-
-        .modal {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: var(--radius);
-          padding: 1.5rem;
-          width: 320px;
-          z-index: 1000;
-          color: var(--text);
-          box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-        }
-
-        .modal-header {
-          font-size: 1.1rem;
-          margin-bottom: 1rem;
-          font-weight: 600;
-          color: var(--text);
-        }
-
-        .modal-body button {
-          display: block;
-          width: 100%;
-          padding: 0.75rem;
-          margin: 0.4rem 0;
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: 8px;
-          color: var(--text);
-          cursor: pointer;
-          font-size: 0.95rem;
-        }
-
-        .modal-body button:hover {
-          background: light-dark(#f0f0f0, #3a3a3a);
-          border-color: var(--primary-blue);
-        }
-
-        .modal-close {
-          margin-top: 1rem;
-          background: transparent;
-          color: var(--text-secondary);
-          border: none;
-          font-size: 0.9rem;
-          cursor: pointer;
-        }
-
-        .modal-close:hover {
-          color: var(--text);
-        }
-      </style>
-
       ${!this.isConnected 
         ? html`
           <button class="connect-btn" @click=${() => this.showWalletSelector()} ?disabled=${this.isLoading}>
