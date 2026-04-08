@@ -15,6 +15,7 @@
     "lucid-cardano": "^0.10.11"
   },
   "devDependencies": {
+    "@astrojs/lit": "^4.3.0",
     "@astrojs/vercel": "^10.0.3",
     "@types/node": "^25.5.2"
   }
