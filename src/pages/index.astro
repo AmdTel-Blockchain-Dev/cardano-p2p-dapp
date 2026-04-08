@@ -1,23 +1,20 @@
 ---  
-import WalletConnect from '../components/WalletConnect.qwik';  
+
 ---  
 
 <html lang="en">  
 <head>  
   <meta charset="utf-8" />  
   <title>P2P • Cardano Commerce</title>  
-  <meta name="viewport" content="width=device-width, initial-scale=1" />  
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script type="module" src="/src/components/wallet/WalletButton.js"></script>
 </head>  
 <body>  
   <header>  
     <h1>P2P Marketplace <span style="font-size:0.6em;">(Items only — $P2P)</span></h1>  
-  </header>  
+  </header>
 
-  <WalletConnect client:load />  
-
-  <main>  
-    <p>Connect wallet to start buying/selling private images & digital items.</p>  
-    <!-- Marketplace grid will go here in next PR -->  
-  </main>  
+  <wallet-button></wallet-button> 
+  
 </body>  
 </html>  
