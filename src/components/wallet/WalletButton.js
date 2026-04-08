@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css } from "lit";
 
 class WalletButton extends LitElement {
   static properties = {
@@ -10,7 +10,7 @@ class WalletButton extends LitElement {
     showModal: { type: Boolean, state: true },
     modalContent: { type: Object, state: true },
     currentWalletApi: { type: Object, state: true },
-    availableWallets: { type: Array, state: true }
+    availableWallets: { type: Array, state: true },
   };
 
   static get styles() {
@@ -60,7 +60,7 @@ class WalletButton extends LitElement {
         border-radius: var(--radius);
         padding: 1rem;
         width: 240px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         color: var(--text);
         z-index: 100;
       }
@@ -77,7 +77,7 @@ class WalletButton extends LitElement {
         width: 320px;
         z-index: 1000;
         color: var(--text);
-        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
       }
 
       .modal-header {
@@ -146,8 +146,8 @@ class WalletButton extends LitElement {
   constructor() {
     super();
     this.isConnected = false;
-    this.address = '';
-    this.walletName = '';
+    this.address = "";
+    this.walletName = "";
     this.isLoading = false;
     this.showProfile = false;
     this.showModal = false;
@@ -165,18 +165,20 @@ class WalletButton extends LitElement {
   detectWallets() {
     const wallets = [];
     if (window.cardano) {
-      Object.keys(window.cardano).forEach(key => {
-        if (typeof window.cardano[key]?.enable === 'function') {
+      Object.keys(window.cardano).forEach((key) => {
+        if (typeof window.cardano[key]?.enable === "function") {
           wallets.push(key.charAt(0).toUpperCase() + key.slice(1));
         }
       });
     }
-    this.availableWallets = wallets.length ? wallets : ['Nami', 'Eternl', 'Flint', 'Lace'];
+    this.availableWallets = wallets.length
+      ? wallets
+      : ["Nami", "Eternl", "Flint", "Lace"];
   }
 
   restoreSession() {
-    const savedWallet = localStorage.getItem('cardano-wallet-name');
-    const savedAddress = localStorage.getItem('cardano-active-address');
+    const savedWallet = localStorage.getItem("cardano-wallet-name");
+    const savedAddress = localStorage.getItem("cardano-active-address");
     if (savedWallet && savedAddress) {
       this.walletName = savedWallet;
       this.address = savedAddress;
@@ -185,7 +187,13 @@ class WalletButton extends LitElement {
   }
 
   truncateAddress(addr) {
-    return addr ? `${addr.slice(0, 8)}...${addr.slice(-8)}` : '';
+    return addr ? `${addr.slice(0, 8)}...${addr.slice(-8)}` : "";
+  }
+
+  stringToHex(str) {
+    return Array.from(new TextEncoder().encode(str))
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
   }
 
   openModal(content) {
@@ -201,18 +209,23 @@ class WalletButton extends LitElement {
   showWalletSelector() {
     if (this.isLoading) return;
 
-    const walletItems = this.availableWallets.map(name => html`
-      <button class="wallet-option" @click=${() => this.enableWalletAndShowAddressSelector(name)}>
-        ${name}
-      </button>
-    `);
+    const walletItems = this.availableWallets.map(
+      (name) => html`
+        <button
+          class="wallet-option"
+          @click=${() => this.enableWalletAndShowAddressSelector(name)}
+        >
+          ${name}
+        </button>
+      `,
+    );
 
     this.openModal(html`
       <div class="modal-header">Select Wallet to Login</div>
-      <div class="modal-body">
-        ${walletItems}
-      </div>
-      <button class="modal-close" @click=${() => this.closeModal()}>Cancel</button>
+      <div class="modal-body">${walletItems}</div>
+      <button class="modal-close" @click=${() => this.closeModal()}>
+        Cancel
+      </button>
     `);
   }
 
@@ -228,8 +241,12 @@ class WalletButton extends LitElement {
         throw new Error('No addresses found in this wallet');
       }
 
+      // Updated: make the click handler async so we can await the secure flow
       const addressItems = addresses.map(addr => html`
-        <button class="address-option" @click=${() => this.finalizeLogin(walletName, addr, walletApi)}>
+        <button class="address-option" 
+                @click=${async () => {
+                  await this.finalizeLogin(walletName, addr, walletApi);
+                }}>
           ${this.truncateAddress(addr)}
         </button>
       `);
@@ -249,17 +266,69 @@ class WalletButton extends LitElement {
     }
   }
 
-  finalizeLogin(walletName, selectedAddress, walletApi) {
-    localStorage.setItem('cardano-wallet-name', walletName);
-    localStorage.setItem('cardano-active-address', selectedAddress);
+  async finalizeLogin(walletName, selectedAddress, walletApi) {
+    try {
+      this.isLoading = true;
 
-    this.walletName = walletName;
-    this.address = selectedAddress;
-    this.currentWalletApi = walletApi;
-    this.isConnected = true;
-    this.closeModal();
+      // === SECURE NONCE + CIP-30 SIGNATURE FLOW (anti-spoofing) ===
+      const challengeRes = await fetch("/api/auth/challenge", {
+        method: "GET",
+      });
+      if (!challengeRes.ok) throw new Error("Failed to fetch challenge");
 
-    console.log(`Logged in with ${walletName} — ${this.truncateAddress(selectedAddress)}`);
+      const { nonce } = await challengeRes.json();
+
+      const payloadHex = this.stringToHex(nonce);
+
+      // Sign using the already-enabled wallet API (exactly like your original flow)
+      const dataSig = await walletApi.signData(selectedAddress, payloadHex);
+
+      // Server verifies signature and sets HTTP-only cookie
+      const verifyRes = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: selectedAddress,
+          signature: dataSig.signature,
+          key: dataSig.key,
+          nonce: nonce,
+        }),
+      });
+
+      const verifyData = await verifyRes.json();
+
+      if (!verifyData.success) {
+        throw new Error(verifyData.error || "Signature verification failed");
+      }
+      // =======================================================
+
+      // Your original UI state logic (unchanged)
+      localStorage.setItem("cardano-wallet-name", walletName);
+      localStorage.setItem("cardano-active-address", selectedAddress);
+
+      this.walletName = walletName;
+      this.address = selectedAddress;
+      this.currentWalletApi = walletApi;
+      this.isConnected = true;
+      this.closeModal();
+
+      console.log(
+        `✅ Securely logged in with ${walletName} — ${this.truncateAddress(selectedAddress)}`,
+      );
+
+      // Optional: dispatch event so parent pages can react (same as my earlier example)
+      this.dispatchEvent(
+        new CustomEvent("wallet-logged-in", {
+          detail: { address: selectedAddress, walletName },
+          bubbles: true,
+        }),
+      );
+    } catch (err) {
+      console.error(err);
+      alert(`Login failed: ${err.message}. Please try again.`);
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   async switchAddress() {
@@ -270,38 +339,43 @@ class WalletButton extends LitElement {
     try {
       const addresses = await this.currentWalletApi.getUsedAddresses();
 
-      const addressItems = addresses.map(addr => html`
-        <button class="address-option" @click=${() => {
-          localStorage.setItem('cardano-active-address', addr);
-          this.address = addr;
-          this.closeModal();
-          console.log(`Switched to address: ${this.truncateAddress(addr)}`);
-        }}>
-          ${this.truncateAddress(addr)}
-        </button>
-      `);
+      const addressItems = addresses.map(
+        (addr) => html`
+          <button
+            class="address-option"
+            @click=${() => {
+              localStorage.setItem("cardano-active-address", addr);
+              this.address = addr;
+              this.closeModal();
+              console.log(`Switched to address: ${this.truncateAddress(addr)}`);
+            }}
+          >
+            ${this.truncateAddress(addr)}
+          </button>
+        `,
+      );
 
       this.openModal(html`
         <div class="modal-header">Switch Address (${this.walletName})</div>
-        <div class="modal-body">
-          ${addressItems}
-        </div>
-        <button class="modal-close" @click=${() => this.closeModal()}>Cancel</button>
+        <div class="modal-body">${addressItems}</div>
+        <button class="modal-close" @click=${() => this.closeModal()}>
+          Cancel
+        </button>
       `);
     } catch (err) {
       console.error(err);
-      alert('Failed to fetch addresses.');
+      alert("Failed to fetch addresses.");
     } finally {
       this.isLoading = false;
     }
   }
 
   disconnect() {
-    localStorage.removeItem('cardano-wallet-name');
-    localStorage.removeItem('cardano-active-address');
+    localStorage.removeItem("cardano-wallet-name");
+    localStorage.removeItem("cardano-active-address");
     this.isConnected = false;
-    this.address = '';
-    this.walletName = '';
+    this.address = "";
+    this.walletName = "";
     this.currentWalletApi = null;
     this.showProfile = false;
     this.closeModal();
@@ -309,47 +383,65 @@ class WalletButton extends LitElement {
 
   render() {
     return html`
-      ${!this.isConnected 
+      ${!this.isConnected
         ? html`
-          <button class="connect-btn" @click=${() => this.showWalletSelector()} ?disabled=${this.isLoading}>
-            ${this.isLoading ? 'Connecting...' : 'Connect Wallet'}
-          </button>
-        ` 
+            <button
+              class="connect-btn"
+              @click=${() => this.showWalletSelector()}
+              ?disabled=${this.isLoading}
+            >
+              ${this.isLoading ? "Connecting..." : "Connect Wallet"}
+            </button>
+          `
         : html`
-          <button class="connected-btn" @click=${() => this.showProfile = !this.showProfile}>
-            ${this.truncateAddress(this.address)}
-          </button>
-        `}
+            <button
+              class="connected-btn"
+              @click=${() => (this.showProfile = !this.showProfile)}
+            >
+              ${this.truncateAddress(this.address)}
+            </button>
+          `}
 
       <!-- Profile Popover -->
-      ${this.showProfile && this.isConnected ? html`
-        <div class="popover">
-          <div style="margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--text-secondary);">
-            Connected via <strong>${this.walletName}</strong>
-          </div>
-          <button class="popover-btn" @click=${() => alert('View full profile – coming soon')}>
-            View Profile
-          </button>
-          <button class="popover-btn" @click=${() => this.switchAddress()}>
-            Switch Address
-          </button>
-          <button class="popover-btn danger" @click=${() => this.disconnect()}>
-            Log Off
-          </button>
-          <button class="modal-close" @click=${() => this.showProfile = false}>
-            Close
-          </button>
-        </div>
-      ` : ''}
+      ${this.showProfile && this.isConnected
+        ? html`
+            <div class="popover">
+              <div
+                style="margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--text-secondary);"
+              >
+                Connected via <strong>${this.walletName}</strong>
+              </div>
+              <button
+                class="popover-btn"
+                @click=${() => alert("View full profile – coming soon")}
+              >
+                View Profile
+              </button>
+              <button class="popover-btn" @click=${() => this.switchAddress()}>
+                Switch Address
+              </button>
+              <button
+                class="popover-btn danger"
+                @click=${() => this.disconnect()}
+              >
+                Log Off
+              </button>
+              <button
+                class="modal-close"
+                @click=${() => (this.showProfile = false)}
+              >
+                Close
+              </button>
+            </div>
+          `
+        : ""}
 
       <!-- Global Modal -->
-      ${this.showModal && this.modalContent ? html`
-        <div class="modal">
-          ${this.modalContent}
-        </div>
-      ` : ''}
+      ${this.showModal && this.modalContent
+        ? html` <div class="modal">${this.modalContent}</div> `
+        : ""}
     `;
   }
 }
 
-customElements.define('wallet-button', WalletButton);
+customElements.define("wallet-button", WalletButton);
