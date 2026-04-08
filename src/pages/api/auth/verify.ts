@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import verifyDataSignature from '@cardano-foundation/cardano-verify-datasignature';
-import { isNonceValid, consumeNonce, setAuthCookie } from '../../lib/server/auth';
+import { isNonceValid, consumeNonce, setAuthCookie } from '../../../lib/server/auth';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
