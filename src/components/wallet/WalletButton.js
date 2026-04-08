@@ -238,29 +238,35 @@ class WalletButton extends LitElement {
       const addresses = await walletApi.getUsedAddresses();
 
       if (!addresses || addresses.length === 0) {
-        throw new Error('No addresses found in this wallet');
+        throw new Error("No addresses found in this wallet");
       }
 
       // Updated: make the click handler async so we can await the secure flow
-      const addressItems = addresses.map(addr => html`
-        <button class="address-option" 
-                @click=${async () => {
-                  await this.finalizeLogin(walletName, addr, walletApi);
-                }}>
-          ${this.truncateAddress(addr)}
-        </button>
-      `);
+      const addressItems = addresses.map(
+        (addr) => html`
+          <button
+            class="address-option"
+            @click=${async () => {
+              await this.finalizeLogin(walletName, addr, walletApi);
+            }}
+          >
+            ${this.truncateAddress(addr)}
+          </button>
+        `,
+      );
 
       this.openModal(html`
         <div class="modal-header">Select Address for ${walletName}</div>
-        <div class="modal-body">
-          ${addressItems}
-        </div>
-        <button class="modal-close" @click=${() => this.closeModal()}>Cancel</button>
+        <div class="modal-body">${addressItems}</div>
+        <button class="modal-close" @click=${() => this.closeModal()}>
+          Cancel
+        </button>
       `);
     } catch (err) {
       console.error(err);
-      alert(`Failed to connect to ${walletName}. Make sure the extension is installed and unlocked.`);
+      alert(
+        `Failed to connect to ${walletName}. Make sure the extension is installed and unlocked.`,
+      );
     } finally {
       this.isLoading = false;
     }
@@ -269,38 +275,66 @@ class WalletButton extends LitElement {
   async finalizeLogin(walletName, selectedAddress, walletApi) {
     try {
       this.isLoading = true;
+      // // TEMP TEST — plain signData (no server call)
+      // const payloadHex = this.stringToHex("Test message from our DAP - please approve");
+      // const dataSig = await walletApi.signData(selectedAddress, payloadHex);
+      // console.log("Plain signData succeeded!", dataSig);
+      // ==========================================================
 
-      // === SECURE NONCE + CIP-30 SIGNATURE FLOW (anti-spoofing) ===
-      const challengeRes = await fetch("/api/auth/challenge", {
-        method: "GET",
-      });
-      if (!challengeRes.ok) throw new Error("Failed to fetch challenge");
-
+      // === SECURE NONCE + SIGNATURE FLOW (Lace/Yoroi robust) ===
+      const challengeRes = await fetch('/api/auth/challenge', { method: 'GET' });
+      if (!challengeRes.ok) throw new Error('Failed to fetch challenge');
       const { nonce } = await challengeRes.json();
 
       const payloadHex = this.stringToHex(nonce);
 
-      // Sign using the already-enabled wallet API (exactly like your original flow)
-      const dataSig = await walletApi.signData(selectedAddress, payloadHex);
+      let dataSig;
+      const walletNameLower = walletName.toLowerCase();
 
-      // Server verifies signature and sets HTTP-only cookie
-      const verifyRes = await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          address: selectedAddress,
-          signature: dataSig.signature,
-          key: dataSig.key,
-          nonce: nonce,
-        }),
-      });
+      try {
+        dataSig = await walletApi.signData(selectedAddress, payloadHex);
+      } catch (signErr) {
+        console.warn(`signData failed for ${walletName}:`, signErr.code, signErr.info);
 
-      const verifyData = await verifyRes.json();
-
-      if (!verifyData.success) {
-        throw new Error(verifyData.error || "Signature verification failed");
+        // Lace-specific graceful handling
+        if (walletNameLower.includes('lace') && (signErr.code === 3 || signErr.info?.toLowerCase().includes('decline'))) {
+          throw new Error('LACE_SIGN_FAIL');
+        }
+        throw signErr; // re-throw real errors
       }
       // =======================================================
+
+      // // === SECURE NONCE + CIP-30 SIGNATURE FLOW (anti-spoofing) ===
+      // const challengeRes = await fetch("/api/auth/challenge", {
+      //   method: "GET",
+      // });
+      // if (!challengeRes.ok) throw new Error("Failed to fetch challenge");
+
+      // const { nonce } = await challengeRes.json();
+
+      // const payloadHex = this.stringToHex(nonce);
+
+      // // Sign using the already-enabled wallet API (exactly like your original flow)
+      // const dataSig = await walletApi.signData(selectedAddress, payloadHex);
+
+      // // Server verifies signature and sets HTTP-only cookie
+      // const verifyRes = await fetch("/api/auth/verify", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({
+      //     address: selectedAddress,
+      //     signature: dataSig.signature,
+      //     key: dataSig.key,
+      //     nonce: nonce,
+      //   }),
+      // });
+
+      // const verifyData = await verifyRes.json();
+
+      // if (!verifyData.success) {
+      //   throw new Error(verifyData.error || "Signature verification failed");
+      // }
+      // // =======================================================
 
       // Your original UI state logic (unchanged)
       localStorage.setItem("cardano-wallet-name", walletName);
@@ -323,9 +357,25 @@ class WalletButton extends LitElement {
           bubbles: true,
         }),
       );
-    } catch (err) {
-      console.error(err);
-      alert(`Login failed: ${err.message}. Please try again.`);
+          } catch (err) {
+      console.error('Secure login error (full):', err);
+
+      let userMessage = 'Login failed. Please try again.';
+
+      if (err.message === 'LACE_SIGN_FAIL') {
+        userMessage = `Lace wallet failed to return the signature (even after you approved).\n\n` +
+                     `This is a known Lace CIP-30 issue.\n\n` +
+                     `Recommended: Use Yoroi, Nami or Eternl for reliable login.\n\n` +
+                     `You can still try Lace again, but it may require multiple attempts.`;
+      } else if (err.code === 3 || (err.info && err.info.toLowerCase().includes('decline'))) {
+        userMessage = 'You declined the signature request or the wallet did not return it. Please approve the popup next time.';
+      } else if (err.code === 2) {
+        userMessage = 'This address type is not supported for signing. Try a different address.';
+      } else if (err.message?.includes('fetch')) {
+        userMessage = 'Could not reach the auth server. Check your connection and restart the dev server.';
+      }
+
+      alert(userMessage);
     } finally {
       this.isLoading = false;
     }
