@@ -495,3 +495,5 @@ class WalletButton extends LitElement {
 }
 
 customElements.define("wallet-button", WalletButton);
+
+export default WalletButton;

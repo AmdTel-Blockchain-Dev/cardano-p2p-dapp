@@ -8,6 +8,7 @@ node_modules/
 
 # Temporary files
 temp/
+.vercel/
 
 # logs
 npm-debug.log*
