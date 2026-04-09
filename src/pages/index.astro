@@ -2,6 +2,7 @@
 // src/pages/index.astro
 import BaseLayout from '../layouts/BaseLayout.astro';
 import '../styles/home.css';
+import WalletButton from '../components/wallet/WalletButton.js';   // registers the Lit custom element
 ---
 
 <BaseLayout title="Cardano P2P • Trade Anything, Own Everything">
@@ -15,9 +16,10 @@ import '../styles/home.css';
         
         <p>Connect your wallet • Buy & sell services or items directly with other users • Powered by a self-governed community token.</p>
 
-        <button class="connect-btn" onclick="alert('Self-contained wallet button coming in next stage 🚀')">
-          🔗 Connect Cardano Wallet
-        </button>
+        <!-- Real wallet button as client island -->
+        <div class="wallet-button-container">
+          <WalletButton client:load />
+        </div>
 
         <p class="wallets">Supported wallets: Nami • Eternl • Flint • Lace • Typhon</p>
       </div>
