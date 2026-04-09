@@ -1,0 +1,36 @@
+/* src/styles/global.css */
+@import "open-props/style";
+@import "open-props/normalize.dark";
+
+/* Optional: import ready-made dark buttons (we'll use them on the hero CTA) */
+@import "open-props/buttons.dark";
+
+/* Cardano-themed custom properties on top of Open Props */
+:root {
+  /* Brand colours */
+  --brand: #00d1ff; /* Cardano teal/cyan */
+  --brand-hover: #00b3e0;
+
+  /* Surface & text (dark crypto feel) */
+  --surface-1: var(--gray-12);
+  --surface-2: var(--gray-11);
+  --text-1: var(--gray-1);
+  --text-2: var(--gray-3);
+
+  /* Fluid typography & spacing (Open Props magic) */
+  --font-size-fluid-1: var(--font-size-fluid-1);
+  --font-size-fluid-2: var(--font-size-fluid-2);
+  --font-size-fluid-3: var(--font-size-fluid-3);
+
+  /* Border radius & shadows */
+  --radius-2: var(--radius-2);
+  --shadow-2: var(--shadow-2);
+}
+
+/* Global base */
+body {
+  background-color: var(--surface-1);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  line-height: var(--font-lineheight-3);
+}
