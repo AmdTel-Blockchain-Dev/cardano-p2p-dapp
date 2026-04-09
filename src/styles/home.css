@@ -175,3 +175,32 @@ body {
   color: var(--text-2);
   text-align: center;
 }
+
+/* ====================== WALLET BUTTON ====================== */
+.wallet-button-container {
+  margin-block: var(--size-fluid-5);
+}
+
+wallet-button {
+  display: inline-block;
+}
+
+/* Style the button itself via the component's shadow DOM or exposed classes */
+/* If the component uses .connect-btn or similar internally, we can override via CSS variables */
+.hero .wallet-button-container button,
+.hero wallet-button button {
+  background-color: var(--brand);
+  color: #000;
+  font-size: var(--font-size-fluid-0);
+  font-weight: var(--font-weight-7);
+  padding: var(--size-4) var(--size-fluid-5);
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.hero .wallet-button-container button:hover,
+.hero wallet-button button:hover {
+  background-color: var(--brand-hover);
+}
