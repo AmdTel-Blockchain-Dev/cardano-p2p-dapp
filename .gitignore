@@ -1,7 +1,6 @@
 # build output
 dist/
 package-lock.json
-
 # generated types
 .astro/
 
@@ -28,3 +27,4 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
