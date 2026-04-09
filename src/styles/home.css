@@ -1,0 +1,177 @@
+/* src/styles/home.css */
+@import "open-props/style";
+@import "open-props/normalize";
+@import "open-props/normalize/dark";
+@import "open-props/buttons/dark";
+
+/* Cardano P2P brand tokens on top of Open Props */
+:root {
+  --brand: #00d1ff;
+  --brand-hover: #00b3e0;
+  --surface-1: #0a0a0a;
+  --surface-2: #111111;
+  --text-1: #f0f0f0;
+  --text-2: #aaaaaa;
+  --radius-lg: var(--radius-3);
+  --shadow-md: var(--shadow-2);
+}
+
+/* Global resets & base for the whole site (we can move this to global.css later if needed) */
+body {
+  background-color: var(--surface-1);
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  line-height: var(--font-lineheight-3);
+}
+
+/* ====================== HOMEPAGE LAYOUT ====================== */
+
+.home-container {
+  max-inline-size: var(--size-content-3);   /* Open Props fluid content width */
+  margin-inline: auto;
+  padding-inline: var(--size-fluid-3);      /* nice breathing room on mobile & desktop */
+}
+
+/* HERO SECTION */
+.hero {
+  min-block-size: 100vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: linear-gradient(to bottom, var(--surface-1), var(--surface-2));
+  padding-block: var(--size-fluid-6);
+}
+
+.hero-content {
+  max-inline-size: var(--size-content-2);
+}
+
+.hero h1 {
+  font-size: var(--font-size-fluid-3);
+  font-weight: var(--font-weight-9);
+  line-height: var(--font-lineheight-1);
+  margin-block-end: var(--size-fluid-3);
+  letter-spacing: -0.04em;
+}
+
+.hero h1 span {
+  color: var(--brand);
+}
+
+.hero p {
+  font-size: var(--font-size-fluid-1);
+  color: var(--text-2);
+  max-inline-size: 38ch;
+  margin-inline: auto;
+  margin-block-end: var(--size-fluid-5);
+}
+
+/* Primary CTA Button - using Open Props button base + our brand */
+.hero .connect-btn {
+  background-color: var(--brand);
+  color: #000;
+  font-size: var(--font-size-fluid-0);
+  font-weight: var(--font-weight-7);
+  padding-block: var(--size-4);
+  padding-inline: var(--size-fluid-5);
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-3);
+}
+
+.hero .connect-btn:hover {
+  background-color: var(--brand-hover);
+}
+
+/* Supported wallets note */
+.hero .wallets {
+  margin-block-start: var(--size-fluid-4);
+  font-size: var(--font-size-00);
+  color: var(--text-2);
+}
+
+/* FEATURES SECTION */
+.features {
+  background-color: var(--surface-2);
+  padding-block: var(--size-fluid-7);
+}
+
+.features .grid {
+  display: grid;
+  gap: var(--size-fluid-5);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* Feature cards */
+.feature-card {
+  background-color: var(--surface-1);
+  padding: var(--size-fluid-4);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.feature-card .icon {
+  font-size: var(--font-size-fluid-2);
+  margin-block-end: var(--size-4);
+}
+
+.feature-card h3 {
+  font-size: var(--font-size-fluid-1);
+  font-weight: var(--font-weight-7);
+  margin-block-end: var(--size-3);
+}
+
+.feature-card p {
+  color: var(--text-2);
+}
+
+/* HOW IT WORKS SECTION */
+.how-it-works {
+  padding-block: var(--size-fluid-7);
+  text-align: center;
+}
+
+.how-it-works h2 {
+  font-size: var(--font-size-fluid-2);
+  margin-block-end: var(--size-fluid-6);
+}
+
+.steps-grid {
+  display: grid;
+  gap: var(--size-fluid-6);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.step {
+  text-align: center;
+}
+
+.step .number {
+  font-size: var(--font-size-fluid-3);
+  margin-block-end: var(--size-3);
+  opacity: 0.9;
+}
+
+.step h4 {
+  font-size: var(--font-size-fluid-0);
+  margin-block-end: var(--size-2);
+}
+
+.step p {
+  color: var(--text-2);
+  max-inline-size: 30ch;
+  margin-inline: auto;
+}
+
+/* FOOTER */
+.footer {
+  background-color: var(--surface-1);
+  padding-block: var(--size-fluid-5);
+  font-size: var(--font-size-00);
+  color: var(--text-2);
+  text-align: center;
+}
