@@ -1,30 +1,19 @@
 ---
-import WalletButton from '../components/wallet/WalletButton'; // reuse our existing one
-import Footer from '../components/Footer.astro'; // we'll create this
+// src/layouts/BaseLayout.astro
+import './styles/global.css';
+
+const { title = 'Cardano P2P • Decentralized Marketplace' } = Astro.props;
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width" />
-  <title>Cardano P2P • {Astro.slots.has('title') ? Astro.slots.render('title') : 'Home'}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Peer-to-peer buy & sell on Cardano. Connect your wallet, trade services & items, govern with the community token." />
+  <title>{title}</title>
 </head>
-<body class="bg-zinc-950 text-white">
-  <header class="border-b border-zinc-800">
-    <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-      <a href="/" class="text-2xl font-bold tracking-tight">P2P</a>
-      <div class="flex items-center gap-x-8">
-        <!-- nav links later -->
-        <WalletButton client:load /> <!-- our self-contained button -->
-      </div>
-    </nav>
-  </header>
-
-  <main>
-    <slot />
-  </main>
-
-  <Footer />
+<body>
+  <slot />
 </body>
 </html>
