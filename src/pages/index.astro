@@ -1,18 +1,84 @@
 ---
-import WalletButton from '../components/wallet/WalletButton.js';
+// src/pages/index.astro
+import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<html lang="en">  
-<head>  
-  <meta charset="utf-8" />  
-  <title>P2P • Cardano Commerce</title>  
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-</head>  
-<body>  
-  <header>  
-    <h1>P2P Marketplace <span style="font-size:0.6em;">(Items only — $P2P)</span></h1>  
+<BaseLayout title="Cardano P2P • Trade Anything, Own Everything">
+
+  <!-- HERO -->
+  <header class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--surface-1)] to-[var(--gray-10)] px-6 py-16">
+    <div class="max-w-5xl mx-auto text-center">
+      <h1 class="text-[var(--font-size-fluid-3)] font-bold leading-none mb-6 tracking-[-2px]">
+        Peer-to-Peer Commerce.<br>
+        <span class="text-[var(--brand)]">On Cardano.</span>
+      </h1>
+      
+      <p class="text-[var(--font-size-fluid-1)] text-[var(--text-2)] max-w-2xl mx-auto mb-10">
+        Connect your wallet • Buy & sell services or items directly<br>
+        with other users • Powered by a self-governed community token.
+      </p>
+
+      <!-- Self-contained wallet button placeholder (we'll swap in the real Lit component next stage) -->
+      <button 
+        class="btn btn-primary text-[var(--font-size-fluid-0)] px-10 py-4 rounded-2xl font-medium inline-flex items-center gap-3 hover:bg-[var(--brand-hover)] transition-colors"
+        onclick="alert('Wallet connect coming in next commit 🚀')">
+        <span>🔗</span>
+        Connect Cardano Wallet
+      </button>
+
+      <p class="mt-8 text-sm text-[var(--text-2)]">Supported: Nami • Eternl • Flint • Lace • Typhon</p>
+    </div>
   </header>
 
-  <WalletButton client:load />
-</body>  
-</html>  
+  <!-- QUICK FEATURES -->
+  <section class="py-20 px-6 bg-[var(--surface-2)]">
+    <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+      <div class="card p-8 rounded-3xl" style="background: var(--surface-1); box-shadow: var(--shadow-2);">
+        <div class="text-4xl mb-4">🔄</div>
+        <h3 class="text-2xl font-semibold mb-2">True P2P</h3>
+        <p class="text-[var(--text-2)]">No middlemen. Direct wallet-to-wallet trades using Cardano smart contracts.</p>
+      </div>
+      <div class="card p-8 rounded-3xl" style="background: var(--surface-1); box-shadow: var(--shadow-2);">
+        <div class="text-4xl mb-4">🪙</div>
+        <h3 class="text-2xl font-semibold mb-2">$DAP Token</h3>
+        <p class="text-[var(--text-2)]">Community-governed token. Stake, vote, earn fees from every trade.</p>
+      </div>
+      <div class="card p-8 rounded-3xl" style="background: var(--surface-1); box-shadow: var(--shadow-2);">
+        <div class="text-4xl mb-4">🔐</div>
+        <h3 class="text-2xl font-semibold mb-2">Wallet-First</h3>
+        <p class="text-[var(--text-2)]">No accounts, no passwords. Your wallet = your identity and credentials.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="py-20 px-6">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-4xl font-semibold mb-12">How it works in 3 steps</h2>
+      <div class="grid md:grid-cols-3 gap-12">
+        <div>
+          <div class="text-5xl mb-4">1️⃣</div>
+          <h4 class="font-semibold mb-2">Connect Wallet</h4>
+          <p class="text-[var(--text-2)]">Sign in instantly with any CIP-30 Cardano wallet.</p>
+        </div>
+        <div>
+          <div class="text-5xl mb-4">2️⃣</div>
+          <h4 class="font-semibold mb-2">List or Browse</h4>
+          <p class="text-[var(--text-2)]">Post services, digital goods, or physical items on-chain.</p>
+        </div>
+        <div>
+          <div class="text-5xl mb-4">3️⃣</div>
+          <h4 class="font-semibold mb-2">Trade & Govern</h4>
+          <p class="text-[var(--text-2)]">Escrow via smart contracts. Vote on platform upgrades with $DAP.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER TEASER -->
+  <footer class="bg-[var(--surface-1)] py-12 px-6 text-center text-sm text-[var(--text-2)]">
+    <p>Built on Cardano • Self-governed • Zero fees on the horizon</p>
+    <p class="mt-4">© 2026 AmdTel Blockchain Dev • feature/home-dashboard-layouts</p>
+  </footer>
+
+</BaseLayout>
