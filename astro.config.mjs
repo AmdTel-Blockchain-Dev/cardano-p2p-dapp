@@ -1,10 +1,10 @@
 import { defineConfig } from 'astro/config';
 import lit from '@astrojs/lit';
-import vercel from '@astrojs/vercel';
+import netlify from '@astrojs/netlify';
 
 export default defineConfig({
-  output: 'static',
-  adapter: vercel(),
+  output: 'server',
+  adapter: netlify(),
   integrations: [lit()],
   vite: {
     plugins: [], // we'll add more later if needed
