@@ -10,8 +10,18 @@
 - `src/pages/` — Astro pages and API routes
 - `src/components/wallet/` — Lit web components (shadow DOM, self-contained styles)
 - `src/layouts/` — Astro layout wrappers
-- `src/styles/` — global.css is the single source of Open Props imports; do not re-import in other files
+- `src/styles/` — Separate CSS files for each major component/feature
+  - `global.css` — Core Open Props imports, brand tokens, global resets
+  - `home.css` — Homepage-specific styles
+  - `dashboard.css` — Dashboard-specific styles
 - `src/lib/server/` — server-only utilities (auth, DB)
+
+## Design System & Styling
+- **Open Props** — Fluid design tokens for spacing, typography, colors, shadows
+- **CSS Custom Properties** — Brand tokens: `--brand: #00d1ff`, surfaces: `--surface-1 / --surface-2`
+- **Dark Theme First** — Optimized for crypto users with light theme support
+- **Separate CSS Files** — Each major feature/component has its own stylesheet
+- **Responsive Design** — Mobile-first with fluid scaling using Open Props
 
 ## Current Implementation Status
 
@@ -26,6 +36,15 @@
 - **CIP-30 compliance**: Full standard implementation with error handling
 - **Lace wallet support**: Special retry logic and fallback authentication due to known CIP-30 issues
 - **Address validation**: Supports all Cardano formats (Shelley, Byron, stake addresses)
+
+### User Dashboard ✅
+- **Post-login landing page**: `/dashboard` with user overview and quick actions
+- **Authentication guards**: Client-side checks redirect unauthenticated users
+- **Activity overview**: Stats cards for listings, volume, reputation, trades
+- **Quick actions**: Links to marketplace, create listings, manage listings, transaction history
+- **Logout functionality**: Disconnect wallet and clear session
+- **Responsive design**: Mobile-first with Open Props fluid tokens
+- **Dark/light theme support**: Automatic theme switching with crypto-optimized dark default
 
 ## Key conventions
 - Lit components must style themselves internally via the `static styles` getter. Never attempt to style them from outside via descendant selectors — shadow DOM blocks this.

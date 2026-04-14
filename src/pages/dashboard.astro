@@ -1,0 +1,136 @@
+---
+// src/pages/dashboard.astro
+import BaseLayout from '../layouts/BaseLayout.astro';
+import '../styles/home.css';
+import '../styles/dashboard.css';
+import WalletButton from '../components/wallet/WalletButton';   // registers the Lit custom element
+---
+
+<BaseLayout title="Dashboard • Cardano P2P">
+
+  <div class="dashboard-container">
+
+    <!-- HEADER -->
+    <header class="dashboard-header">
+      <div class="header-content">
+        <h1>Dashboard</h1>
+        <div class="header-actions">
+          <a href="/" class="nav-link">Home</a>
+          <div class="wallet-status">
+            <WalletButton client:load />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN DASHBOARD -->
+    <main class="dashboard-main" id="dashboard-main">
+
+      <!-- WELCOME CARD -->
+      <section class="welcome-card">
+        <h2>Welcome to Cardano P2P!</h2>
+        <p>Your wallet is connected and ready for trading. Here's your activity overview.</p>
+      </section>
+
+      <!-- STATS GRID -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <h3>0</h3>
+            <p>Active Listings</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-content">
+            <h3>0 ADA</h3>
+            <p>Total Volume</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-content">
+            <h3>100%</h3>
+            <p>Reputation</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-content">
+            <h3>0</h3>
+            <p>Completed Trades</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- QUICK ACTIONS -->
+      <section class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="actions-grid">
+          <a href="/marketplace" class="action-card">
+            <div class="action-icon">🛒</div>
+            <h3>Browse Marketplace</h3>
+            <p>Find items and services to buy</p>
+          </a>
+          <a href="/create-listing" class="action-card">
+            <div class="action-icon">➕</div>
+            <h3>Create Listing</h3>
+            <p>Sell your items or services</p>
+          </a>
+          <a href="/my-listings" class="action-card">
+            <div class="action-icon">📋</div>
+            <h3>My Listings</h3>
+            <p>Manage your active listings</p>
+          </a>
+          <a href="/transactions" class="action-card">
+            <div class="action-icon">📈</div>
+            <h3>Transaction History</h3>
+            <p>View past trades and earnings</p>
+          </a>
+        </div>
+      </section>
+
+      <!-- RECENT ACTIVITY -->
+      <section class="recent-activity">
+        <h2>Recent Activity</h2>
+        <div class="activity-list">
+          <div class="activity-item empty">
+            <div class="activity-icon">📝</div>
+            <div class="activity-content">
+              <p>No recent activity yet. <a href="/marketplace">Start browsing</a> or <a href="/create-listing">create your first listing</a>!</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+</BaseLayout>
+
+<script>
+  // Client-side auth check for dashboard
+  function checkAuth() {
+    const walletName = localStorage.getItem('cardano-wallet-name');
+    const address = localStorage.getItem('cardano-active-address');
+
+    if (!walletName || !address) {
+      console.log('No authentication found, redirecting to home');
+      window.location.href = '/';
+      return;
+    }
+
+    console.log(`Authenticated user: ${walletName} - ${address.substring(0, 16)}...`);
+  }
+
+  // Check auth on page load
+  checkAuth();
+
+  // Also check auth when wallet component loads (in case it disconnects)
+  document.addEventListener('wallet-disconnected', () => {
+    console.log('Wallet disconnected, redirecting to home');
+    window.location.href = '/';
+  });
+</script>

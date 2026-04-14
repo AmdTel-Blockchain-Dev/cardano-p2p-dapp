@@ -270,6 +270,7 @@ class WalletButton extends LitElement {
   modalMode: ModalMode = null;
   modalData: string[] = [];
   availableWallets: string[] = [];
+  hydrated: boolean = false;
 
   constructor() {
     super();
@@ -277,8 +278,15 @@ class WalletButton extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    this.restoreSession();
     this.detectWallets();
+  }
+
+  /**
+   * Called after the component has been updated the first time
+   */
+  firstUpdated(): void {
+    this.hydrated = true;
+    this.restoreSession();
   }
 
   /**
@@ -478,6 +486,9 @@ class WalletButton extends LitElement {
         )}`
       );
 
+      // Redirect to dashboard after successful login
+      window.location.href = '/dashboard';
+
       // Dispatch event for parent components
       this.dispatchEvent(
         new CustomEvent("wallet-logged-in", {
@@ -506,6 +517,9 @@ class WalletButton extends LitElement {
           console.log(
             `✅ Lace fallback login successful with ${this.walletName} — ${this.truncateAddress(selectedAddress)}`
           );
+
+          // Redirect to dashboard after successful fallback login
+          window.location.href = '/dashboard';
           
           return; // Success, don't show error
         } catch (fallbackErr) {
@@ -704,6 +718,13 @@ class WalletButton extends LitElement {
     this.currentWalletApi = null;
     this.showProfile = false;
     this.closeModal();
+
+    // Dispatch event for parent components
+    this.dispatchEvent(
+      new CustomEvent("wallet-disconnected", {
+        bubbles: true,
+      })
+    );
   }
 
   /**
@@ -841,9 +862,12 @@ class WalletButton extends LitElement {
    * Main render method
    */
   render(): TemplateResult {
+    // During hydration, show consistent state to avoid mismatches
+    const shouldShowConnected = this.hydrated && this.isConnected;
+
     return html`
       <div>
-        ${!this.isConnected
+        ${!shouldShowConnected
           ? html`
               <button
                 class="connect-btn"
@@ -863,7 +887,7 @@ class WalletButton extends LitElement {
             `}
 
         <!-- Profile Popover -->
-        ${this.showProfile && this.isConnected
+        ${this.showProfile && shouldShowConnected
           ? this.renderProfilePopover()
           : ""}
 
