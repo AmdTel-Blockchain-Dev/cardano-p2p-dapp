@@ -11,9 +11,14 @@
   "dependencies": {
     "@astrojs/netlify": "^7.0.6",
     "@cardano-foundation/cardano-verify-datasignature": "^1.0.11",
+    "@helia/unixfs": "^3.0.0",
     "astro": "^6.1.1",
+    "blockstore-idb": "^3.0.1",
+    "datastore-idb": "^4.0.1",
+    "helia": "^4.2.0",
     "lit": "^3.3.2",
     "lucid-cardano": "^0.10.11",
+    "multiformats": "^13.3.7",
     "open-props": "^1.7.23"
   },
   "devDependencies": {

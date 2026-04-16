@@ -32,6 +32,48 @@ import WalletButton from '../components/wallet/WalletButton';   // registers the
         <p>Your wallet is connected and ready for trading. Here's your activity overview.</p>
       </section>
 
+      <!-- PROFILE SECTION -->
+      <section class="profile-section">
+        <div class="profile-header">
+          <h2>Your Profile</h2>
+          <p class="profile-note">⚠️ Stored as plaintext on public IPFS. Don't share sensitive information.</p>
+        </div>
+        
+        <div class="profile-form">
+          <div class="form-group">
+            <label for="displayName">Display Name *</label>
+            <input type="text" id="displayName" placeholder="Your public name" maxlength="100" />
+          </div>
+
+          <div class="form-group">
+            <label for="about">About</label>
+            <textarea id="about" placeholder="Tell others about yourself" maxlength="500"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="contact">Contact</label>
+            <input type="text" id="contact" placeholder="Email or contact info" maxlength="100" />
+          </div>
+
+          <div class="form-group">
+            <label for="website">Website</label>
+            <input type="text" id="website" placeholder="https://example.com" maxlength="200" />
+          </div>
+
+          <div class="form-group">
+            <label for="avatarCid">Avatar CID</label>
+            <input type="text" id="avatarCid" placeholder="IPFS CID (bafy... or Qm...)" maxlength="100" />
+          </div>
+
+          <div class="profile-actions">
+            <button id="loadProfileBtn" class="btn btn-secondary">Load Profile</button>
+            <button id="saveProfileBtn" class="btn btn-primary">Save Profile</button>
+          </div>
+
+          <div id="profileStatus" class="profile-status"></div>
+        </div>
+      </section>
+
       <!-- STATS GRID -->
       <section class="stats-grid">
         <div class="stat-card">
@@ -111,6 +153,267 @@ import WalletButton from '../components/wallet/WalletButton';   // registers the
 </BaseLayout>
 
 <script>
+  // Lazy-load IPFS utilities (only when profile actions are triggered)
+  let ipfsLoaded = false;
+  let addJsonToIPFS: any;
+  let getJsonFromIPFS: any;
+  let getIPFSStatus: any;
+
+  async function ensureIPFSLoaded(): Promise<void> {
+    if (!ipfsLoaded) {
+      const ipfsModule = await import('../lib/client/ipfs');
+      addJsonToIPFS = ipfsModule.addJsonToIPFS;
+      getJsonFromIPFS = ipfsModule.getJsonFromIPFS;
+      getIPFSStatus = ipfsModule.getIPFSStatus;
+      ipfsLoaded = true;
+    }
+  }
+
+  // Type definition for profile object
+  interface UserProfile {
+    displayName?: string;
+    about?: string;
+    contact?: string;
+    website?: string;
+    avatarCid?: string;
+  }
+
+  // Get form elements with proper type casting
+  const displayNameInput = document.getElementById('displayName') as HTMLInputElement | null;
+  const aboutInput = document.getElementById('about') as HTMLTextAreaElement | null;
+  const contactInput = document.getElementById('contact') as HTMLInputElement | null;
+  const websiteInput = document.getElementById('website') as HTMLInputElement | null;
+  const avatarCidInput = document.getElementById('avatarCid') as HTMLInputElement | null;
+  const loadProfileBtn = document.getElementById('loadProfileBtn') as HTMLButtonElement | null;
+  const saveProfileBtn = document.getElementById('saveProfileBtn') as HTMLButtonElement | null;
+  const profileStatus = document.getElementById('profileStatus') as HTMLElement | null;
+
+  // Status update helper
+  function setStatus(message: string, type: string = 'info'): void {
+    if (!profileStatus) return;
+    profileStatus.textContent = message;
+    profileStatus.className = `profile-status status-${type}`;
+  }
+
+  // Clear and disable form during operations
+  function setFormDisabled(disabled: boolean): void {
+    [displayNameInput, aboutInput, contactInput, websiteInput, avatarCidInput].forEach((el) => {
+      if (el) el.disabled = disabled;
+    });
+    [loadProfileBtn, saveProfileBtn].forEach((el) => {
+      if (el) el.disabled = disabled;
+    });
+  }
+
+  function clearProfileForm(): void {
+    if (displayNameInput) displayNameInput.value = '';
+    if (aboutInput) aboutInput.value = '';
+    if (contactInput) contactInput.value = '';
+    if (websiteInput) websiteInput.value = '';
+    if (avatarCidInput) avatarCidInput.value = '';
+  }
+
+  // Load profile from IPFS
+  async function loadProfile(): Promise<void> {
+    try {
+      setFormDisabled(true);
+      setStatus('Loading profile...', 'info');
+      await ensureIPFSLoaded();
+
+      const address = localStorage.getItem('cardano-active-address');
+      let profileSource: 'ipfs' | 'local-cache' | null = null;
+
+      // --- Tier 1: server pointer → IPFS fetch ---
+      let profile: UserProfile | null = null;
+      try {
+        const response = await fetch('/api/profile/get', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const data = (await response.json()) as { success: boolean; found: boolean; cid?: string };
+          if (data.success && data.found && data.cid) {
+            setStatus('Found profile pointer, fetching from IPFS...', 'info');
+            const fetched = await getJsonFromIPFS(data.cid) as UserProfile | null;
+            if (fetched) {
+              profile = fetched;
+              profileSource = 'ipfs';
+              // Refresh local cache with latest server-known CID
+              if (address) {
+                localStorage.setItem(`profile-cid:${address}`, data.cid);
+                localStorage.setItem(`profile-data:${address}`, JSON.stringify(fetched));
+              }
+            }
+          }
+        }
+      } catch (_) { /* server unreachable or returned error — fall through to next tier */ }
+
+      // --- Tier 2: localStorage CID → IPFS fetch ---
+      if (!profile && address) {
+        const cachedCid = localStorage.getItem(`profile-cid:${address}`);
+        if (cachedCid) {
+          setStatus('Server pointer not found, trying cached CID...', 'info');
+          try {
+            const fetched = await getJsonFromIPFS(cachedCid) as UserProfile | null;
+            if (fetched) {
+              profile = fetched;
+              profileSource = 'ipfs';
+            }
+          } catch (_) { /* IPFS also timed out — fall through */ }
+        }
+      }
+
+      // --- Tier 3: localStorage cached profile data (instant fallback) ---
+      if (!profile && address) {
+        const cached = localStorage.getItem(`profile-data:${address}`);
+        if (cached) {
+          try {
+            profile = JSON.parse(cached) as UserProfile;
+            profileSource = 'local-cache';
+            setStatus('Profile loaded from local cache (IPFS unavailable).', 'info');
+          } catch (_) { /* bad JSON — ignore */ }
+        }
+      }
+
+      if (!profile) {
+        setStatus('No profile saved yet. Create one and save!', 'info');
+        clearProfileForm();
+        setFormDisabled(false);
+        return;
+      }
+
+      // Populate form with profile data
+      if (displayNameInput) displayNameInput.value = profile.displayName || '';
+      if (aboutInput) aboutInput.value = profile.about || '';
+      if (contactInput) contactInput.value = profile.contact || '';
+      if (websiteInput) websiteInput.value = profile.website || '';
+      if (avatarCidInput) avatarCidInput.value = profile.avatarCid || '';
+
+      if (profileSource === 'ipfs') {
+        const ipfsStatus = getIPFSStatus?.();
+        const suffix = ipfsStatus?.storageMode === 'indexeddb'
+          ? ' Stored blocks are persisted in this browser.'
+          : ' Browser IPFS storage is still in-memory.';
+        setStatus(`Profile loaded from IPFS.${suffix}`, 'success');
+      } else if (!profileStatus?.textContent?.startsWith('Profile loaded from local cache')) {
+        setStatus('Profile loaded successfully!', 'success');
+      }
+      setFormDisabled(false);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      setStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+      setFormDisabled(false);
+    }
+  }
+
+  // Save profile to IPFS
+  async function saveProfile(): Promise<void> {
+    try {
+      setFormDisabled(true);
+      setStatus('Saving profile...', 'info');
+      await ensureIPFSLoaded();
+
+
+      if (!displayNameInput) {
+        setStatus('Form not initialized', 'error');
+        setFormDisabled(false);
+        return;
+      }
+
+      // Validate displayName
+      if (!displayNameInput.value.trim()) {
+        setStatus('Display name is required', 'error');
+        setFormDisabled(false);
+        return;
+      }
+
+      // Create profile object
+      const profileData: UserProfile = {
+        displayName: displayNameInput.value.trim(),
+        about: aboutInput?.value.trim() || '',
+        contact: contactInput?.value.trim() || '',
+        website: websiteInput?.value.trim() || '',
+        avatarCid: avatarCidInput?.value.trim() || '',
+      };
+
+      // Save to IPFS
+      setStatus('Storing on IPFS...', 'info');
+      const cid = await addJsonToIPFS(profileData);
+
+      if (!cid) {
+        setStatus('Failed to store profile on IPFS', 'error');
+        setFormDisabled(false);
+        return;
+      }
+
+      setStatus('Verifying IPFS read-back...', 'info');
+      const verifiedProfile = await getJsonFromIPFS(cid, 5000, true) as UserProfile | null;
+
+      if (!verifiedProfile) {
+        const ipfsStatus = getIPFSStatus?.();
+        const detail = ipfsStatus?.lastInitError
+          ? ` Storage init error: ${ipfsStatus.lastInitError}`
+          : ` Storage mode: ${ipfsStatus?.storageMode || 'unknown'}, peers: ${ipfsStatus?.connectionCount ?? 0}.`;
+        setStatus(`CID created, but the local IPFS blockstore could not read it back.${detail}`, 'error');
+        setFormDisabled(false);
+        return;
+      }
+
+      // Send to server to store pointer
+      setStatus('Saving pointer...', 'info');
+      const response = await fetch('/api/profile/save', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cid,
+          profile: profileData,
+        }),
+      });
+
+      const data = (await response.json()) as { success: boolean; error?: string };
+
+      if (!response.ok) {
+        setStatus(`Error: ${data.error || 'Failed to save profile pointer'}`, 'error');
+        setFormDisabled(false);
+        return;
+      }
+
+      if (!data.success) {
+        setStatus(`Error: ${data.error || 'Unknown error'}`, 'error');
+        setFormDisabled(false);
+        return;
+      }
+
+      // Cache CID and profile data locally so they survive server restarts
+      const address = localStorage.getItem('cardano-active-address');
+      if (address) {
+        localStorage.setItem(`profile-cid:${address}`, cid);
+        localStorage.setItem(`profile-data:${address}`, JSON.stringify(profileData));
+      }
+
+      const ipfsStatus = getIPFSStatus?.();
+      const storageNote = ipfsStatus?.storageMode === 'indexeddb'
+        ? 'persisted in this browser'
+        : 'stored only in this tab memory';
+
+      setStatus(`Profile saved with CID ${cid.slice(0, 12)}... and verified from IPFS (${storageNote}).`, 'success');
+      setFormDisabled(false);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      setStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+      setFormDisabled(false);
+    }
+  }
+
+  // Set up event listeners
+  if (loadProfileBtn) loadProfileBtn.addEventListener('click', loadProfile);
+  if (saveProfileBtn) saveProfileBtn.addEventListener('click', saveProfile);
+
+  // Load profile on page load
+  checkAuth();
+  loadProfile();
+
   // Client-side auth check for dashboard
   function checkAuth() {
     const walletName = localStorage.getItem('cardano-wallet-name');
@@ -124,9 +427,6 @@ import WalletButton from '../components/wallet/WalletButton';   // registers the
 
     console.log(`Authenticated user: ${walletName} - ${address.substring(0, 16)}...`);
   }
-
-  // Check auth on page load
-  checkAuth();
 
   // Also check auth when wallet component loads (in case it disconnects)
   document.addEventListener('wallet-disconnected', () => {
